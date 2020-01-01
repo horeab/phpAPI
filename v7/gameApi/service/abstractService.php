@@ -1,0 +1,98 @@
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'] . '/' . json_decode(file_get_contents("php://input"))->apiVersion . '/gameApi/config/database.php';
+
+abstract class AbstractService
+{
+
+    protected $conn;
+
+    public function __construct()
+    {
+        $database = new Database();
+        $this->conn = $database->getConnection();
+    }
+
+    abstract function getTableName();
+
+    function incrementColumnValue($entityId, $columnName)
+    {
+        $query = "UPDATE " . $this->getTableName() . " SET " . $columnName . " = " . $columnName . " + 1 WHERE id = :entityId";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":entityId", $entityId);
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+
+    function getColumnValue($entityId, $columnName)
+    {
+        $query = "SELECT " . $columnName . " FROM " . $this->getTableName() . " WHERE id = :entityId";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":entityId", $entityId);
+        $stmt->execute();
+        
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return json_encode($row[$columnName]);
+    }
+
+    function updateColumnValue($entityId, $columnName, $columnValue)
+    {
+        $query = "UPDATE " . $this->getTableName() . " SET " . $columnName . " = :columnValue WHERE id = :entityId";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":entityId", $entityId);
+        $stmt->bindParam(":columnValue", $columnValue);
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+
+    function getColumnValueForUserId($userId, $columnName)
+    {
+        $query = "SELECT " . $columnName . " FROM " . $this->getTableName() . " WHERE userId = :userId";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":userId", $userId);
+        $stmt->execute();
+        
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return json_encode($row[$columnName]);
+    }
+
+    function updateColumnValueForUserId($userId, $columnName, $columnValue)
+    {
+        $query = "UPDATE " . $this->getTableName() . " SET " . $columnName . " = :columnValue WHERE userId = :userId";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":userId", $userId);
+        $stmt->bindParam(":columnValue", $columnValue);
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+
+    function deleteForUserId($userId)
+    {
+        $query = "DELETE FROM " . $this->getTableName() . " WHERE userId = :userId";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":userId", $userId);
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+
+    function deleteEntity($entityId)
+    {
+        $query = "DELETE FROM " . $this->getTableName() . " WHERE id = :entityId";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":entityId", $entityId);
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
+    }
+}
+?>
